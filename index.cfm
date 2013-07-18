@@ -1,7 +1,3 @@
-<cfset attributes = {} />
-<cfset structAppend( attributes, url ) />
-<cfset structAppend( attributes, form ) />
-
 <cfset ideal = request.ideal />
 <cfset ideal.setMerchantReturnURL( "http://www.your-website-here.nl/index.cfm" ) />
 
@@ -10,7 +6,7 @@
 <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
 <form method="post" action="index.cfm">
   <fieldset>
-    <legend>Ideal Test Suite</legend>
+    <legend>Ideal.cfc Test Suite</legend>
     <div><cfoutput>#ideal.directoryRequest()#</cfoutput></div>
     <button type="submit" name="amount" value="1">Run test 1</button>
     <button type="submit" name="amount" value="2">Run test 2</button>
@@ -21,15 +17,17 @@
   </fieldset>
 </form>
 
+<cfdump var="#ideal#" />
+
 <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
 <!--- ~~ STEP 2, TRANSACTION REQUEST:                                    ~~ --->
 <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
-<cfif structKeyExists( attributes, "amount" ) and 
-      structKeyExists( attributes, "issuerID" ) and 
-      isNumeric( attributes.issuerID ) and 
-      attributes.issuerID gt 0>
-  <cfset ideal.setAmount( attributes.amount ) />
-  <cfset ideal.setIssuerID( attributes.issuerID ) />
+<cfif structKeyExists( form, "amount" ) and 
+      structKeyExists( form, "issuerID" ) and 
+      isNumeric( form.issuerID ) and 
+      form.issuerID gt 0>
+  <cfset ideal.setAmount( form.amount ) />
+  <cfset ideal.setIssuerID( form.issuerID ) />
   <cfset ideal.setPurchaseID( randRange( 1000, 9999 )) />
   <cfset ideal.setDescription( "test" ) />
   <cfset ideal.transactionRequest() />
@@ -38,11 +36,9 @@
 <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
 <!--- ~~ STEP 3, STATUS REQUEST:                                         ~~ --->
 <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
-<cfif structKeyExists( attributes, "trxid" )>
-  <cfset ideal.setTransactionID( attributes.trxid ) />
+<cfif structKeyExists( url, "trxid" )>
+  <cfset ideal.setTransactionID( url.trxid ) />
   <cfset local.status = ideal.statusRequest() />
   <hr />
   Status: <strong><cfoutput>#local.status.AcquirerStatusRes.Transaction.status.xmlText#</cfoutput></strong>
 </cfif>
-
-<cfabort />

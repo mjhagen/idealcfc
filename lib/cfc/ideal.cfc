@@ -31,6 +31,7 @@
   <cfproperty name="ksAlias" type="string" />
   <cfproperty name="ksPassword" type="string" />
   <cfproperty name="idealURL" required="yes" type="string" />
+  <cfproperty name="cacheName" default="cache" required="no" type="string" />
 
   <cfset variables.debugIP = "::1,fe80:0:0:0:0:0:0:1%1,127.0.0.1" />
   <cfset variables.debugEmail = "administrator@your-website-here.nl" />
@@ -47,7 +48,7 @@
   <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
   <cffunction name="init" returnType="ideal" output="no">
     <cfargument name="initProperties" required="false" default="#{}#" />
-    <cfargument name="bRecycle" default="0" type="boolean" />
+    <cfargument name="reload" default="0" type="boolean" />
 
     <cfset var tempfunc = "" />
 
@@ -56,8 +57,8 @@
       <cfset tempfunc( arguments.initProperties[key] ) />
     </cfloop>
 
-    <cfif not structKeyExists( application, "cache3" ) or arguments.bRecycle>
-      <cfset application.cache3 = {} />
+    <cfif not structKeyExists( application, getCacheName()) or arguments.reload>
+      <cfset application[getCacheName()] = {} />
     </cfif>
 
     <cfreturn this />
@@ -72,7 +73,7 @@
     <cfset var issuerList = "" />
     <cfset var result = "" />
 
-    <cfif not structKeyExists( application.cache3, cacheName )>
+    <cfif not structKeyExists( application[getCacheName()], cacheName )>
       <cfset var issuersXML = postRequest( "Directory" ) />
       <cfset var issuers = {} />
 
@@ -104,10 +105,10 @@
         } ) />
       </cfloop>
 
-      <cfset application.cache3[cacheName] = issuers />
+      <cfset application[getCacheName()][cacheName] = issuers />
     </cfif>
     
-    <cfset issuers = application.cache3[cacheName] />
+    <cfset issuers = application[getCacheName()][cacheName] />
     <cfset var issuerKeyList = listSort( structKeyList( issuers ), 'text' ) />
 
     <cfif len( getDefaultCountry())>
