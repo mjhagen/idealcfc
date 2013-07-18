@@ -24,7 +24,7 @@
     
       if( not structKeyExists( application.cache, "ideal" ))
       {
-        application.cache.ideal = createObject( "ideal_v331" ).init(
+        application.cache.ideal = createObject( "lib/cfc/ideal" ).init(
           initProperties  = {
             idealURL          = "URL TO IDEAL",
             ksFile            = "ABSOLUTE PATH TO KEYSTORE FILE.ks",
