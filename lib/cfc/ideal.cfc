@@ -6,7 +6,7 @@
     1.  keytool -genkey -keyalg RSA -sigAlg SHA256withRSA -keysize 2048 -validity 1825 -alias {KeyStoreAlias} -keystore {keystoreFileName.ks}
     2.  keytool -export -v -rfc -alias {KeyStoreAlias} -keystore {keystoreFileName.ks} -file {certificateFileName.cer}
 
-    Upload ks file to e-line server ( not to a web accessible directory )
+    Upload ks file to your server ( not to a web accessible directory )
     Upload cer file to ideal dashboard
 
     Requirements:
@@ -31,6 +31,9 @@
   <cfproperty name="ksAlias" type="string" />
   <cfproperty name="ksPassword" type="string" />
   <cfproperty name="idealURL" required="yes" type="string" />
+
+  <cfset variables.debugIP = "::1,fe80:0:0:0:0:0:0:1%1,127.0.0.1" />
+  <cfset variables.debugEmail = "administrator@your-website-here.nl" />
 
   <cfif not structKeyExists( server, 'idealcrypto' )>
     <cfset variables.pwd = getDirectoryFromPath( GetCurrentTemplatePath()) />
@@ -257,7 +260,7 @@
       </cfif>
 
       <cfcatch>
-        <cfif listFind( "95.96.121.69,212.187.55.233,::1,fe80:0:0:0:0:0:0:1%1,127.0.0.1", cgi.remote_addr )>
+        <cfif listFind( variables.debugIP, cgi.remote_addr )>
           <cfcontent reset=true /><cfsetting enableCFoutputOnly="false" />
           <cfoutput><h2>Request:</h2><pre>#htmlEditFormat( indentXml( xmlRequest ))#</pre></cfoutput>
           <cfoutput><h2>Response:</h2><pre>#htmlEditFormat( indentXml( cfhttp.fileContent ))#</pre></cfoutput>
@@ -269,7 +272,7 @@
           type="Error" 
           text="#cfcatch.detail#" />
 
-        <cfmail from="administrator@e-line.nl" to="administrator@e-line.nl" subject="iDEAL Error: #cfcatch.message#" type="html">
+        <cfmail from="#variables.debugEmail#" to="#variables.debugEmail#" subject="iDEAL Error: #cfcatch.message#" type="html">
           Error: <cfdump var="#cfcatch#" />
           XML: <cfdump var="#xmlRequest#" />
           <cfif isDefined( "cfhttp.fileContent" )>
