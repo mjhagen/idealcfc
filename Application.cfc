@@ -6,7 +6,7 @@
   </cffunction>
 
   <cffunction name="onRequestStart">
-    <cfif not structKeyExists( application, "cache" ) or
+    <cfif not structKeyExists( application, "ideal" ) or
           (
             structKeyExists( url, "reload" ) and
             isBoolean( url.reload ) and
