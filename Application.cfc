@@ -2,17 +2,7 @@
   <cfset this.name = "idealcfcexample" />
 
   <cffunction name="onApplicationStart">
-    <cfset application.ideal = createObject( "lib/cfc/ideal" ).init(
-      initProperties = {
-        idealURL          = "URL TO IDEAL",
-        ksFile            = "ABSOLUTE PATH TO KEYSTORE FILE.ks",
-        ksAlias           = "KEYSTORE ALIAS",
-        ksPassword        = "KEYSTORE PASSWORD",
-        merchantID        = "00000000000",
-        merchantReturnURL = "http://www.your-website-here.nl/index.cfm",
-        cacheName         = this.name
-      }
-    ) />
+    <cfset application.ideal = createObject( "lib/cfc/ideal" ).init( config = expandPath( "./config/production.cfm" ) ) />
   </cffunction>
 
   <cffunction name="onRequestStart">

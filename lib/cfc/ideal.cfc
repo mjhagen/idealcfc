@@ -31,10 +31,10 @@
   <cfproperty name="ksAlias" type="string" />
   <cfproperty name="ksPassword" type="string" />
   <cfproperty name="idealURL" required="yes" type="string" />
-  <cfproperty name="cacheName" default="cache" required="no" type="string" />
 
   <cfset variables.debugIP = "::1,fe80:0:0:0:0:0:0:1%1,127.0.0.1" />
   <cfset variables.debugEmail = "administrator@your-website-here.nl" />
+  <cfset variables.cacheName = "cache" />
 
   <cfif not structKeyExists( server, 'idealcrypto' )>
     <cfset variables.pwd = getDirectoryFromPath( GetCurrentTemplatePath()) />
@@ -47,19 +47,33 @@
 
   <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
   <cffunction name="init" returnType="ideal" output="no">
+    <cfargument name="config" required="false" default="" />
     <cfargument name="initProperties" required="false" default="#{}#" />
-    <cfargument name="reload" default="0" type="boolean" />
 
     <cfset var tempfunc = "" />
+
+    <cfif not structKeyExists( application, variables.cacheName) or structKeyExists( url, "reload" )>
+      <cfset application[variables.cacheName] = {} />
+    </cfif>
+
+    <!--- Optionally read config from a file, otherwise, just instantiate the cfc with your options as arguments. --->
+    <cfif len( trim( arguments.config )) and fileExists( arguments.config )>
+      <cfset application[variables.cacheName].properties = {} />
+      <cffile action="read" file="#arguments.config#" variable="config" />
+
+      <cfloop list="#config#" delimiters="#chr( 13 )##chr( 10 )#" index="valuePair">
+        <cfif valuePair contains '<!---' or valuePair contains '--->'>
+          <cfcontinue />
+        </cfif>
+
+        <cfset arguments.initProperties[listFirst( valuePair, ' #chr( 9 )#' )] = trim( listRest( valuePair, ' #chr( 9 )#' )) />
+      </cfloop>
+    </cfif>
 
     <cfloop collection="#arguments.initProperties#" item="key">
       <cfset tempfunc = evaluate( "set" & key ) />
       <cfset tempfunc( arguments.initProperties[key] ) />
     </cfloop>
-
-    <cfif not structKeyExists( application, getCacheName()) or arguments.reload>
-      <cfset application[getCacheName()] = {} />
-    </cfif>
 
     <cfreturn this />
   </cffunction>
@@ -73,7 +87,7 @@
     <cfset var issuerList = "" />
     <cfset var result = "" />
 
-    <cfif not structKeyExists( application[getCacheName()], cacheName )>
+    <cfif not structKeyExists( application[variables.cacheName], cacheName )>
       <cfset var issuersXML = postRequest( "Directory" ) />
       <cfset var issuers = {} />
 
@@ -105,10 +119,10 @@
         } ) />
       </cfloop>
 
-      <cfset application[getCacheName()][cacheName] = issuers />
+      <cfset application[variables.cacheName][cacheName] = issuers />
     </cfif>
     
-    <cfset issuers = application[getCacheName()][cacheName] />
+    <cfset issuers = application[variables.cacheName][cacheName] />
     <cfset var issuerKeyList = listSort( structKeyList( issuers ), 'text' ) />
 
     <cfif len( getDefaultCountry())>
