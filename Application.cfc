@@ -2,7 +2,11 @@
   <cfset this.name = "idealcfcexample" />
 
   <cffunction name="onApplicationStart">
-    <cfset application.ideal = createObject( "lib/cfc/ideal" ).init( config = expandPath( "./config/production.cfm" )) />
+    <cfif structKeyExists( application, "ideal" )>
+      <cfset structDelete( application, "ideal" ) />
+    </cfif>
+
+    <cfset application.ideal = createObject( "lib/cfc/ideal" ).init( config = expandPath( "./config/test.cfm" )) />
   </cffunction>
 
   <cffunction name="onRequestStart">
@@ -21,8 +25,10 @@
 
   <cffunction name="onError">
     <cfargument name="error" />
-
-    <cfdump var="#application#" />
+    <cfoutput>
+      <h3>#error.message#</h3>
+      <h4>#error.detail#</h4>
+    </cfoutput>
     <cfdump var="#error#" />
   </cffunction>
 </cfcomponent>
