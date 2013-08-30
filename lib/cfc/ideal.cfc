@@ -74,7 +74,7 @@
           </cfloop>
         </cfif>
       </cflock>
-  
+
       <cfloop collection="#arguments.initProperties#" item="key">
         <cfset tempfunc = evaluate( "set" & key ) />
         <cfset tempfunc( arguments.initProperties[key] ) />
@@ -86,7 +86,7 @@
 
       <cfreturn this />
 
-      <cfcatch>
+      <cfcatch type="any">
         <cfreturn handleError( cfcatch ) />
       </cfcatch>
     </cftry>
@@ -185,7 +185,7 @@
   
       <cfreturn trim( result ) />
 
-      <cfcatch>
+      <cfcatch type="any">
         <cfreturn handleError( cfcatch ) />
       </cfcatch>
     </cftry>
@@ -206,7 +206,7 @@
   
       <cfreturn transactionXML.AcquirerTrxRes.Issuer.issuerAuthenticationURL.xmlText />
 
-      <cfcatch>
+      <cfcatch type="any">
         <cfreturn handleError( cfcatch ) />
       </cfcatch>
     </cftry>
@@ -217,7 +217,7 @@
     <cftry>
       <cfreturn postRequest( "Status" ) />
 
-      <cfcatch>
+      <cfcatch type="any">
         <cfreturn handleError( cfcatch ) />
       </cfcatch>
     </cftry>
@@ -279,7 +279,7 @@
           <cfset xmlString &= '</AcquirerTrxReq>' />
         </cfcase>
   
-        <!--- TODO: StatusRequest --->
+        <!--- StatusRequest --->
         <cfcase value="Status">
           <cfset xmlString &= '<AcquirerStatusReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">' />
           <cfset xmlString &= '<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>' />
@@ -310,16 +310,12 @@
 
       <!--- Error logging --->
       <cfif structKeyExists( result, "AcquirerErrorRes" )>
-        <cfthrow 
-          errorCode="#result.AcquirerErrorRes.Error.errorCode.xmlText#" 
-          message="#result.AcquirerErrorRes.Error.errorMessage.xmlText#" 
-          detail="#result.AcquirerErrorRes.Error.errorDetail.xmlText#" 
-          extendedInfo="#result.AcquirerErrorRes.Error.consumerMessage.xmlText#" />
+        <cfthrow message="#result.AcquirerErrorRes.Error.errorMessage.xmlText#" detail="#result.AcquirerErrorRes.Error.errorDetail.xmlText#" errorCode="#result.AcquirerErrorRes.Error.errorCode.xmlText#" extendedInfo="#result.AcquirerErrorRes.Error.consumerMessage.xmlText#" />
       </cfif>
 
       <cfreturn result />
 
-      <cfcatch>
+      <cfcatch type="any">
         <cfreturn handleError( cfcatch ) />
       </cfcatch>
     </cftry>
@@ -410,7 +406,7 @@
   
       <cfreturn StringWriter.toString() />
 
-      <cfcatch>
+      <cfcatch type="any">
         <cfreturn handleError( cfcatch ) />
       </cfcatch>
     </cftry>
@@ -422,7 +418,7 @@
       <cfset var timestamp = dateConvert( "local2utc", getTimestamp()) />
       <cfreturn dateFormat( timestamp, "yyyy-mm-dd" ) & "T" & timeFormat( timestamp, "HH:mm:ss.l" ) & "Z" />
 
-      <cfcatch>
+      <cfcatch type="any">
         <cfreturn handleError( cfcatch ) />
       </cfcatch>
     </cftry>
@@ -438,7 +434,7 @@
   
       <cfreturn uCase( binaryEncode( sha1Md.digest(), 'hex' )) />
 
-      <cfcatch>
+      <cfcatch type="any">
         <cfreturn handleError( cfcatch ) />
       </cfcatch>
     </cftry>
@@ -495,7 +491,7 @@
 
       <cfreturn arrayToList(lines, chr(10)) />
 
-      <cfcatch>
+      <cfcatch type="any">
         <cfreturn handleError( cfcatch ) />
       </cfcatch>
     </cftry>
