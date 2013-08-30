@@ -54,24 +54,26 @@
 
     <cftry>
       <cfset var tempfunc = "" />
-  
-      <cfif not structKeyExists( application, variables.cacheName) or structKeyExists( url, "reload" )>
-        <cfset application[variables.cacheName] = {} />
-      </cfif>
-  
-      <!--- Optionally read config from a file, otherwise, just instantiate the cfc with your options as arguments. --->
-      <cfif len( trim( arguments.config )) and fileExists( arguments.config )>
-        <cfset application[variables.cacheName].properties = {} />
-        <cffile action="read" file="#arguments.config#" variable="config" />
-  
-        <cfloop list="#config#" delimiters="#chr( 13 )##chr( 10 )#" index="valuePair">
-          <cfif valuePair contains '<!---' or valuePair contains '--->'>
-            <cfcontinue />
-          </cfif>
-  
-          <cfset arguments.initProperties[listFirst( valuePair, ' #chr( 9 )#' )] = trim( listRest( valuePair, ' #chr( 9 )#' )) />
-        </cfloop>
-      </cfif>
+
+      <cflock name="lock_#application.applicationname#_init" timeout="5" type="exclusive">
+        <cfif not structKeyExists( application, variables.cacheName) or structKeyExists( url, "reload" )>
+          <cfset application[variables.cacheName] = {} />
+        </cfif>
+    
+        <!--- Optionally read config from a file, otherwise, just instantiate the cfc with your options as arguments. --->
+        <cfif len( trim( arguments.config )) and fileExists( arguments.config )>
+          <cfset application[variables.cacheName].properties = {} />
+          <cffile action="read" file="#arguments.config#" variable="config" />
+    
+          <cfloop list="#config#" delimiters="#chr( 13 )##chr( 10 )#" index="valuePair">
+            <cfif valuePair contains '<!---' or valuePair contains '--->'>
+              <cfcontinue />
+            </cfif>
+    
+            <cfset arguments.initProperties[listFirst( valuePair, ' #chr( 9 )#' )] = trim( listRest( valuePair, ' #chr( 9 )#' )) />
+          </cfloop>
+        </cfif>
+      </cflock>
   
       <cfloop collection="#arguments.initProperties#" item="key">
         <cfset tempfunc = evaluate( "set" & key ) />
