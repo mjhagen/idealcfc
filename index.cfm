@@ -1,5 +1,8 @@
 <cfset ideal = request.ideal />
-<cfset ideal.setMerchantReturnURL( "http://www.your-website-here.nl/index.cfm" ) />
+<!--- 
+  Set return URL to your test suite
+  <cfset ideal.setMerchantReturnURL( "http://www.your-website-here.nl/index.cfm" ) />
+--->
 
 <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
 <!--- ~~ STEP 1, DIRECTORY REQUEST:                                      ~~ --->
@@ -17,15 +20,12 @@
   </fieldset>
 </form>
 
-<cfdump var="#ideal#" />
-
 <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
 <!--- ~~ STEP 2, TRANSACTION REQUEST:                                    ~~ --->
 <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
 <cfif structKeyExists( form, "amount" ) and 
       structKeyExists( form, "issuerID" ) and 
-      isNumeric( form.issuerID ) and 
-      form.issuerID gt 0>
+      len( trim( form.issuerID ))>
   <cfset ideal.setAmount( form.amount ) />
   <cfset ideal.setIssuerID( form.issuerID ) />
   <cfset ideal.setPurchaseID( randRange( 1000, 9999 )) />
