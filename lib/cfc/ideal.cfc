@@ -1,6 +1,6 @@
 <cfcomponent accessors="true" output="no" persistent="true">
   <cfprocessingdirective pageEncoding="utf-8" />
-  <!--- 
+  <!---
     Generate ideal certificates like this:
 
     1.  keytool -genkey -keyalg RSA -sigAlg SHA256withRSA -keysize 2048 -validity 1825 -alias {KeyStoreAlias} -keystore {keystoreFileName.ks}
@@ -59,17 +59,17 @@
         <cfif not structKeyExists( application, variables.cacheName) or structKeyExists( url, "reload" )>
           <cfset application[variables.cacheName] = {} />
         </cfif>
-    
+
         <!--- Optionally read config from a file, otherwise, just instantiate the cfc with your options as arguments. --->
         <cfif len( trim( arguments.config )) and fileExists( arguments.config )>
           <cfset application[variables.cacheName].properties = {} />
           <cffile action="read" file="#arguments.config#" variable="config" />
-    
+
           <cfloop list="#config#" delimiters="#chr( 13 )##chr( 10 )#" index="valuePair">
             <cfif valuePair contains '<!---' or valuePair contains '--->'>
               <cfcontinue />
             </cfif>
-    
+
             <cfset arguments.initProperties[listFirst( valuePair, ' #chr( 9 )#' )] = trim( listRest( valuePair, ' #chr( 9 )#' )) />
           </cfloop>
         </cfif>
@@ -120,56 +120,56 @@
       <cfset var issuerXML = "" />
       <cfset var issuerList = "" />
       <cfset var result = "" />
-  
+
       <cfif not structKeyExists( application[variables.cacheName], cacheName )>
         <cfset var issuersXML = postRequest( "Directory" ) />
         <cfset var issuers = {} />
-  
+
         <cfset var issuerLists = issuersXML.DirectoryRes.Directory />
-        
+
         <cfif structKeyExists( issuersXML.DirectoryRes.Directory, "Country" )>
           <cfset issuerLists = issuersXML.DirectoryRes.Directory.Country />
         </cfif>
-  
+
         <cfloop array="#issuerLists.xmlChildren#" index="issuerXML">
           <cfif issuerXML.xmlName eq "countryNames">
             <cfset issuerList = issuerXML.xmlText />
           </cfif>
-  
+
           <cfif issuerXML.xmlName neq "Issuer">
             <cfcontinue />
           </cfif>
-  
+
           <cfset var issuerID = issuerXML.xmlChildren[1].xmlText />
           <cfset var issuerName = issuerXML.xmlChildren[2].xmlText />
-  
+
           <cfif not structKeyExists( issuers, issuerList )>
             <cfset issuers[issuerList] = [] />
           </cfif>
-  
+
           <cfset arrayAppend( issuers[issuerList], {
             "id" = issuerID,
             "name" = issuerName
           } ) />
         </cfloop>
-  
+
         <cfset application[variables.cacheName][cacheName] = issuers />
       </cfif>
-      
+
       <cfset issuers = application[variables.cacheName][cacheName] />
       <cfset var issuerKeyList = listSort( structKeyList( issuers ), 'text' ) />
-  
+
       <cfif len( getDefaultCountry())>
         <cfif listFindNoCase( issuerKeyList, getDefaultCountry())>
           <cfset issuerKeyList  = listDeleteAt( issuerKeyList, listFindNoCase( issuerKeyList, getDefaultCountry())) />
         </cfif>
         <cfset issuerKeyList  = listPrepend( issuerKeyList, getDefaultCountry()) />
       </cfif>
-  
+
       <cfsavecontent variable="result"><cfoutput>
         <select name="issuerID" id="issuerID" style="margin-bottom:10px;" class="#arguments.class#">
           <option value="">Kies uw bank:</option>
-  
+
           <cfloop list="#issuerKeyList#" index="key">
             <cfif not structKeyExists( issuers, key )>
               <cfcontinue />
@@ -182,7 +182,7 @@
           </cfloop>
         </select>
       </cfoutput></cfsavecontent>
-  
+
       <cfreturn trim( result ) />
 
       <cfcatch type="any">
@@ -197,13 +197,13 @@
 
     <cftry>
       <cfset var transactionXML = postRequest( "Transaction" ) />
-  
+
       <cfif arguments.redirect>
         <cflocation url="#transactionXML.AcquirerTrxRes.Issuer.issuerAuthenticationURL.xmlText#" addToken="no" />
       </cfif>
-  
+
       <cfset setTransactionID( transactionXML.AcquirerTrxRes.Transaction.transactionID.XmlText ) />
-  
+
       <cfreturn transactionXML.AcquirerTrxRes.Issuer.issuerAuthenticationURL.xmlText />
 
       <cfcatch type="any">
@@ -229,9 +229,9 @@
 
     <cftry>
       <cfset var xmlString = '<?xml version="1.0" encoding="UTF-8"?>' />
-  
+
       <cfset setTimestamp( now()) />
-  
+
       <cfswitch expression="#arguments.requestType#">
         <!--- DirectoryRequest --->
         <cfcase value="Directory">
@@ -243,12 +243,12 @@
           <cfset xmlString &= '</Merchant>' />
           <cfset xmlString &= '</DirectoryReq>' />
         </cfcase>
-  
+
         <!--- TransactionRequest --->
         <cfcase value="Transaction">
           <cfset setEntranceCode( getPurchaseID() ) />
           <cfset setDescription( right( getDescription(), 32 )) />
-  
+
           <cfset xmlString &= '<AcquirerTrxReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">' />
           <cfset xmlString &= '<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>' />
           <cfset xmlString &= '<Issuer>' />
@@ -263,22 +263,22 @@
           <cfset xmlString &= '<purchaseID>#getPurchaseID()#</purchaseID>' />
           <cfset xmlString &= '<amount>#getAmount()#</amount>' />
           <cfset xmlString &= '<currency>#getCurrency()#</currency>' />
-  
+
           <cfif len( getExpirationPeriod())>
             <cfset xmlString &= '<expirationPeriod>#getExpirationPeriod()#</expirationPeriod>' />
           </cfif>
-  
+
           <cfset xmlString &= '<language>#getLanguage()#</language>' />
           <cfset xmlString &= '<description>#xmlFormat( getDescription())#</description>' />
-  
+
           <cfif len( getEntranceCode())>
             <cfset xmlString &= '<entranceCode>#xmlFormat( getEntranceCode())#</entranceCode>' />
           </cfif>
-  
+
           <cfset xmlString &= '</Transaction>' />
           <cfset xmlString &= '</AcquirerTrxReq>' />
         </cfcase>
-  
+
         <!--- StatusRequest --->
         <cfcase value="Status">
           <cfset xmlString &= '<AcquirerStatusReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">' />
@@ -293,9 +293,9 @@
           <cfset xmlString &= '</AcquirerStatusReq>' />
         </cfcase>
       </cfswitch>
-  
+
       <cfset var xmlRequest = xmlParse( signXML( xmlString )) />
-  
+
       <cfhttp url="#getIdealURL()#" method="post" charset="utf-8">
         <cfhttpparam type="header" name="content-type" value="text/xml; charset=""utf-8""" />
         <cfhttpparam type="header" name="content-length" value="#len( xmlRequest )#" />
@@ -344,11 +344,11 @@
       <cfset var StringWriter             = createObject( "java", "java.io.StringWriter" ).init() />
       <cfset var StreamResult             = createObject( "java", "javax.xml.transform.stream.StreamResult" ) />
       <cfset var DOMStructure             = createObject( "java", "javax.xml.crypto.dom.DOMStructure" ) />
-  
+
       <cfset var KeyStore                 = createObject( "java", "java.security.KeyStore" ) />
       <cfset var PasswordProtection       = createObject( "java", "java.security.KeyStore$PasswordProtection" ).init( getKSPassword().toCharArray()) />
       <cfset var FileInputStream          = createObject( "java", "java.io.FileInputStream" ) />
-  
+
       <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
       <!--- ~~ Signature creation: Step 1                                  ~~ --->
       <!--- ~~ Is now done in a java file compiled at runtime              ~~ --->
@@ -357,11 +357,11 @@
       <cfset var facObj = variables.idealcrypto.init() />
       <cfset var fac = facObj.fac />
       <cfset var signedInfo = facObj.signedInfo />
-  
+
       <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
       <!--- ~~ Signature creation: Step 2                                  ~~ --->
       <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
-      
+
       <!--- Load the KeyStore and get the signing key and certificate. --->
       <cfset var ksfile = FileInputStream.init( getKSFile()) />
       <cfset var ks = KeyStore.getInstance( "JKS" ) />
@@ -369,41 +369,41 @@
       <cfset var keyEntry = ks.getEntry( getKSAlias(), PasswordProtection ) />
       <cfset var cert = keyEntry.getCertificate() />
       <cfset ksfile.close() />
-  
+
       <!--- Create the KeyInfo containing the X509Data. --->
       <cfset var kif = fac.getKeyInfoFactory() />
       <cfset var keyInfo = kif.newKeyInfo([kif.newKeyName( createSHA1Fingerprint( cert ))]) />
-  
+
       <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
       <!--- ~~ Signature creation: Step 3                                  ~~ --->
       <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
-  
+
       <!--- Instantiate the document to be signed. --->
       <cfset var dbf_i = DocumentBuilderFactory.newInstance() />
       <cfset dbf_i.setNamespaceAware( true ) />
       <cfset var doc = dbf_i.newDocumentBuilder().parse( InputSource.init( StringReader.init( arguments.strToSign ))) />
-  
+
       <!--- Create a DOMSignContext and specify the RSA PrivateKey and location of
             the resulting XMLSignature's parent element. --->
       <cfset var dsc = DOMSignContext.init( keyEntry.getPrivateKey(), doc.getDocumentElement()) />
-  
+
       <!--- Create the XMLSignature, but don't sign it yet. --->
       <cfset var signature = fac.newXMLSignature( signedInfo, keyInfo ) />
-  
+
       <!--- Marshal, generate, and sign the enveloped signature. --->
       <cfset signature.sign( dsc ) />
-  
+
       <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
       <!--- ~~ Signature creation: Step 4                                  ~~ --->
       <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
       <!--- Output the resulting document. --->
-  
+
       <cfset var xmlResult = StreamResult.init( StringWriter ) />
       <cfset var ds = DOMSource.init( doc ) />
       <cfset var tf = TransformerFactory.newInstance() />
       <cfset var trans = tf.newTransformer() />
       <cfset trans.transform( ds, xmlResult ) />
-  
+
       <cfreturn StringWriter.toString() />
 
       <cfcatch type="any">
@@ -431,8 +431,28 @@
     <cftry>
       <cfset var sha1Md = createObject( "java", "java.security.MessageDigest" ).getInstance( "SHA-1" ) />
       <cfset sha1Md.update( cert.getEncoded()) />
-  
+
       <cfreturn uCase( binaryEncode( sha1Md.digest(), 'hex' )) />
+
+      <cfcatch type="any">
+        <cfreturn handleError( cfcatch ) />
+      </cfcatch>
+    </cftry>
+  </cffunction>
+
+  <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
+  <cffunction name="getFingerprint">
+    <cftry>
+      <cfset var jFileInputStream = createObject( "java", "java.io.FileInputStream" ) />
+      <cfset var jKeyStore = createObject( "java", "java.security.KeyStore" ) />
+      <cfset var jPasswordProtection = createObject( "java", "java.security.KeyStore$PasswordProtection" ) />
+
+      <cfset var ks = jKeyStore.getInstance( "JKS" ) />
+      <cfset ks.load( jFileInputStream.init( getKSFile()), getKSPassword().toCharArray()) />
+
+      <cfset var keyEntry = ks.getEntry( getKSAlias(), jPasswordProtection.init( getKSPassword().toCharArray())) />
+
+      <cfreturn createSHA1Fingerprint( keyEntry.getCertificate()) />
 
       <cfcatch type="any">
         <cfreturn handleError( cfcatch ) />
@@ -442,12 +462,12 @@
 
   <!---
    indentXml pretty-prints XML and XML-like markup without requiring valid XML.
-   
+
    @param xml 	 XML string to format. (Required)
    @param indent 	 String used for creating the indention. Defaults to a space. (Optional)
-   @return Returns a string. 
-   @author Barney Boisvert (&#98;&#98;&#111;&#105;&#115;&#118;&#101;&#114;&#116;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;) 
-   @version 2, July 30, 2010 
+   @return Returns a string.
+   @author Barney Boisvert (&#98;&#98;&#111;&#105;&#115;&#118;&#101;&#114;&#116;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;)
+   @version 2, July 30, 2010
   --->
   <cffunction name="indentXml" output="false" returntype="string">
     <cfargument name="xml" type="string" required="true" />
@@ -464,7 +484,7 @@
       <cfset xml = trim(REReplace(xml, "(^|>)\s*(<|$)", "\1#chr(10)#\2", "all")) />
       <cfset lines = listToArray(xml, chr(10)) />
       <cfset depth = 0 />
-  
+
       <cfloop from="1" to="#arrayLen(lines)#" index="i">
         <cfset line = trim(lines[i]) />
         <cfset isCDATAStart = left(line, 9) EQ "<![CDATA[" />
