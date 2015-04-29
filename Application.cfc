@@ -1,34 +1,41 @@
-<cfcomponent>
-  <cfset this.name = "idealcfcexample" />
+component
+{
+  this.name = "idealcfcexample";
 
-  <cffunction name="onApplicationStart">
-    <cfif structKeyExists( application, "ideal" )>
-      <cfset structDelete( application, "ideal" ) />
-    </cfif>
+  public void function onApplicationStart()
+  {
+    if( structKeyExists( application, "ideal" ))
+    {
+      structDelete( application, "ideal" );
+    }
 
-    <cfset application.ideal = createObject( "lib/cfc/ideal" ).init( config = expandPath( "./config/test.cfm" )) />
-  </cffunction>
+    application.ideal = createObject( "lib/cfc/ideal" ).init( config = expandPath( "./config/test.cfm" ));
+  }
 
-  <cffunction name="onRequestStart">
-    <cfif not structKeyExists( application, "ideal" ) or
-          (
-            structKeyExists( url, "reload" ) and
-            isBoolean( url.reload ) and
-            url.reload
-          )>
-      <cfset onApplicationStart() />
-      <cfset application.ideal.reload = true />
-    </cfif>
+  public void function onRequestStart()
+  {
+    if(
+        not structKeyExists( application, "ideal" ) or
+        (
+          structKeyExists( url, "reload" ) and
+          isBoolean( url.reload ) and
+          url.reload
+        )
+      )
+    {
+      onApplicationStart();
+      application.ideal.reload = true;
+    }
 
-    <cfset request.ideal = application.ideal />
-  </cffunction>
+    request.ideal = application.ideal;
+  }
 
-  <cffunction name="onError">
-    <cfargument name="error" />
-    <cfoutput>
-      <h3>#error.message#</h3>
-      <h4>#error.detail#</h4>
-    </cfoutput>
-    <cfdump var="#error#" />
-  </cffunction>
-</cfcomponent>
+  public void function onError( error )
+  {
+    param error.message = "";
+    param error.detail = "";
+
+    writeOutput( '<h3>#error.message#</h3><h4>#error.detail#</h4>' );
+    writeDump( error );
+  }
+}
