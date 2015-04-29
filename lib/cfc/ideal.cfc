@@ -4,11 +4,11 @@ component accessors=true
 {
   property name="timestamp" type="date";
   property name="issuerID" type="String";
-  property name="merchantID" type="numeric";
-  property name="subID" type="numeric" default="0";
-  property name="purchaseID" type="numeric"                                     hint="Order ID";
+  property name="merchantID" type="Numeric";
+  property name="subID" type="Numeric" default=0;
+  property name="purchaseID" type="Numeric"                                     hint="Order ID";
   property name="transactionID" type="String" default="";
-  property name="amount" type="numeric";
+  property name="amount" type="Numeric";
   property name="currency" type="String" default="EUR";
   property name="language" type="String" default="nl";
   property name="description" type="String"                                     hint="NO HTML ALLOWED!";
@@ -19,7 +19,7 @@ component accessors=true
   property name="ksFile" type="String";
   property name="ksAlias" type="String";
   property name="ksPassword" type="String";
-  property name="idealURL" required="yes" type="String";
+  property name="idealURL" type="String" required=true;
   property name="debugIP" type="String" default="::1,fe80:0:0:0:0:0:0:1%1,127.0.0.1" required=false;
   property name="debugEmail" type="String" default="administrator@your-website-here.nl" required=false;
   property name="debugLog" type="String" default="ideal-cfc" required=false;
@@ -106,7 +106,7 @@ component accessors=true
    * Method to generate a <select /> with a list of participating banks
    * @param calss           String    CSS class name(s)
    */
-  public Void function directoryRequest( String class="" )
+  public String function directoryRequest( String class="" )
   {
     try
     {
@@ -200,7 +200,7 @@ component accessors=true
    * @param redirect        boolean   if you need to do more processing before
    *                                  being redirected, set this to false.
    */
-  public Void function transactionRequest( boolean redirect=true )
+  public String function transactionRequest( boolean redirect=true )
   {
     try
     {
@@ -226,7 +226,7 @@ component accessors=true
   /**
    * @return  Returns the status of the current order being processed by ideal
    */
-  public Void function statusRequest()
+  public String function statusRequest()
   {
     try
     {
@@ -426,62 +426,62 @@ component accessors=true
       switch( requestType )
       {
         case "Directory":
-          xmlString &='<DirectoryReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" xmlns:ns2="http://www.w3.org/2000/09/xmldsig##" version="3.3.1">';
-          xmlString &='<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>';
-          xmlString &='<Merchant>';
-          xmlString &='<merchantID>#getMerchantID()#</merchantID>';
-          xmlString &='<subID>#getSubID()#</subID>';
-          xmlString &='</Merchant>';
-          xmlString &='</DirectoryReq>';
+          xmlString &='<DirectoryReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" xmlns:ns2="http://www.w3.org/2000/09/xmldsig##" version="3.3.1">'
+                    & '<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>'
+                    & '<Merchant>'
+                    & '<merchantID>#getMerchantID()#</merchantID>'
+                    & '<subID>#getSubID()#</subID>'
+                    & '</Merchant>'
+                    & '</DirectoryReq>';
         break;
 
         case "Transaction":
           setEntranceCode( getPurchaseID() );
           setDescription( right( getDescription(), 32 ));
 
-          xmlString &='<AcquirerTrxReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">';
-          xmlString &='<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>';
-          xmlString &='<Issuer>';
-          xmlString &='<issuerID>#getIssuerID()#</issuerID>';
-          xmlString &='</Issuer>';
-          xmlString &='<Merchant>';
-          xmlString &='<merchantID>#getMerchantID()#</merchantID>';
-          xmlString &='<subID>#getSubID()#</subID>';
-          xmlString &='<merchantReturnURL>#xmlFormat( getMerchantReturnURL())#</merchantReturnURL>';
-          xmlString &='</Merchant>';
-          xmlString &='<Transaction>';
-          xmlString &='<purchaseID>#getPurchaseID()#</purchaseID>';
-          xmlString &='<amount>#getAmount()#</amount>';
-          xmlString &='<currency>#getCurrency()#</currency>';
+          xmlString &='<AcquirerTrxReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">'
+                    & '<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>'
+                    & '<Issuer>'
+                    & '<issuerID>#getIssuerID()#</issuerID>'
+                    & '</Issuer>'
+                    & '<Merchant>'
+                    & '<merchantID>#getMerchantID()#</merchantID>'
+                    & '<subID>#getSubID()#</subID>'
+                    & '<merchantReturnURL>#xmlFormat( getMerchantReturnURL())#</merchantReturnURL>'
+                    & '</Merchant>'
+                    & '<Transaction>'
+                    & '<purchaseID>#getPurchaseID()#</purchaseID>'
+                    & '<amount>#getAmount()#</amount>'
+                    & '<currency>#getCurrency()#</currency>';
 
           if( len( getExpirationPeriod()) )
           {
             xmlString &='<expirationPeriod>#getExpirationPeriod()#</expirationPeriod>';
           }
 
-          xmlString &='<language>#getLanguage()#</language>';
-          xmlString &='<description>#xmlFormat( getDescription())#</description>';
+          xmlString &='<language>#getLanguage()#</language>'
+                    & '<description>#xmlFormat( getDescription())#</description>';
 
           if( len( getEntranceCode()) )
           {
             xmlString &='<entranceCode>#xmlFormat( getEntranceCode())#</entranceCode>';
           }
 
-          xmlString &='</Transaction>';
-          xmlString &='</AcquirerTrxReq>';
+          xmlString &='</Transaction>'
+                    & '</AcquirerTrxReq>';
         break;
 
         case "Status":
-          xmlString &='<AcquirerStatusReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">';
-          xmlString &='<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>';
-          xmlString &='<Merchant>';
-          xmlString &='<merchantID>#getMerchantID()#</merchantID>';
-          xmlString &='<subID>#getSubID()#</subID>';
-          xmlString &='</Merchant>';
-          xmlString &='<Transaction>';
-          xmlString &='<transactionID>#getTransactionID()#</transactionID>';
-          xmlString &='</Transaction>';
-          xmlString &='</AcquirerStatusReq>';
+          xmlString &='<AcquirerStatusReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">'
+                    & '<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>'
+                    & '<Merchant>'
+                    & '<merchantID>#getMerchantID()#</merchantID>'
+                    & '<subID>#getSubID()#</subID>'
+                    & '</Merchant>'
+                    & '<Transaction>'
+                    & '<transactionID>#getTransactionID()#</transactionID>'
+                    & '</Transaction>'
+                    & '</AcquirerStatusReq>';
         break;
       }
 
