@@ -1,5 +1,4 @@
 component accessors=true
-          persistent=true
           hint="See https://github.com/mjhagen/idealcfc for implementation help."
 {
   property name="timestamp" type="date";
@@ -28,10 +27,10 @@ component accessors=true
   variables.cacheName="cache";
 
   // idealcrypto.class is dynamically compiled, but only once per server.
-  if( not structKeyExists( server, 'idealcrypto' ))
+  if( not structKeyExists( server, 'idealcrypto' ) || structKeyExists( url, "idealreload" ))
   {
     variables.pwd=getDirectoryFromPath( GetCurrentTemplatePath());
-    variables.jl=new javaloader.JavaLoader( sourceDirectories=[ '#variables.pwd#\..\java' ]);
+    variables.jl=new javaloader.JavaLoader( sourceDirectories=[ '#variables.pwd#/../java' ]);
     variables.idealcrypto=jl.create( 'idealcrypto' );
     server.idealcrypto=variables.idealcrypto;
   }

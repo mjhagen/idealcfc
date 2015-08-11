@@ -17,19 +17,14 @@ public class idealcrypto
 
   public idealcrypto() throws Exception
   {
-    try
-    {
-      fac = XMLSignatureFactory.getInstance("DOM");
+    fac = XMLSignatureFactory.getInstance("DOM");
 
-      DigestMethod digestMethod = fac.newDigestMethod( SIGNATURE_REFERENCE_DIGEST_METHOD, null );
-      List<Transform> transformList = Collections.singletonList(fac.newTransform(SIGNATURE_REFERENCE_TRANSFORM_MODE, (TransformParameterSpec) null));
-      Reference ref = fac.newReference(SIGNATURE_REFERENCE_URI, digestMethod, transformList, null, null);
-      SignatureMethod method = fac.newSignatureMethod( SIGNATURE_SIGNED_INFO_ALGORITHM, null );
-      CanonicalizationMethod canonicalizationMethod = fac.newCanonicalizationMethod(SIGNATURE_SIGNED_INFO_CANONICALIZATION_METHOD, (C14NMethodParameterSpec) null);
-      
-      signedInfo = fac.newSignedInfo(canonicalizationMethod, method, Collections.singletonList(ref));
-    }
-    catch( Exception e )
-    {}
+    DigestMethod digestMethod = fac.newDigestMethod( SIGNATURE_REFERENCE_DIGEST_METHOD, null );
+    List<Transform> transformList = Collections.singletonList(fac.newTransform(SIGNATURE_REFERENCE_TRANSFORM_MODE, (TransformParameterSpec) null));
+    Reference ref = fac.newReference(SIGNATURE_REFERENCE_URI, digestMethod, transformList, null, null);
+    SignatureMethod method = fac.newSignatureMethod( SIGNATURE_SIGNED_INFO_ALGORITHM, null );
+    CanonicalizationMethod canonicalizationMethod = fac.newCanonicalizationMethod(SIGNATURE_SIGNED_INFO_CANONICALIZATION_METHOD, (C14NMethodParameterSpec) null);
+
+    signedInfo = fac.newSignedInfo(canonicalizationMethod, method, Collections.singletonList(ref));
   }
 }

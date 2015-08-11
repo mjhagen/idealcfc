@@ -1,5 +1,5 @@
 <cfset ideal = request.ideal />
-<!--- 
+<!---
   Set return URL to your test suite
   <cfset ideal.setMerchantReturnURL( "http://www.your-website-here.nl/index.cfm" ) />
 --->
@@ -23,8 +23,8 @@
 <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
 <!--- ~~ STEP 2, TRANSACTION REQUEST:                                    ~~ --->
 <!--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ --->
-<cfif structKeyExists( form, "amount" ) and 
-      structKeyExists( form, "issuerID" ) and 
+<cfif structKeyExists( form, "amount" ) and
+      structKeyExists( form, "issuerID" ) and
       len( trim( form.issuerID ))>
   <cfset ideal.setAmount( form.amount ) />
   <cfset ideal.setIssuerID( form.issuerID ) />
