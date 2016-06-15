@@ -56,8 +56,14 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
 
       structAppend( variables, initProperties, true );
 
-      if( !fileExists( getKSFile())) {
-        throw( type="nl.mingo.ideal.init", message="Missing keystore file (#getKSFile()#)" );
+      param variables.ksFile="";
+
+      if( left( variables.ksFile, 1 ) == "." ) {
+        variables.ksFile = expandPath( variables.ksFile );
+      }
+
+      if( !fileExists( variables.ksFile )) {
+        throw( type="nl.mingo.ideal.init", message="Missing keystore file" );
       }
 
       return this;
