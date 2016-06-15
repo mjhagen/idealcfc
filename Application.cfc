@@ -1,28 +1,20 @@
-component
-{
+component {
   this.name = "idealcfcexample";
 
-  public void function onApplicationStart()
-  {
-    if( structKeyExists( application, "ideal" ))
-    {
+  public void function onApplicationStart() {
+    if( structKeyExists( application, "ideal" )) {
       structDelete( application, "ideal" );
     }
 
-    application.ideal = createObject( "lib/cfc/ideal" ).init( config = expandPath( "./config/test.cfm" ));
+    application.ideal = new ideal( expandPath( "./config/test.cfm" ));
   }
 
-  public void function onRequestStart()
-  {
-    if(
-        not structKeyExists( application, "ideal" ) or
-        (
-          structKeyExists( url, "reload" ) and
-          isBoolean( url.reload ) and
+  public void function onRequestStart() {
+    if( !structKeyExists( application, "ideal" ) || (
+          structKeyExists( url, "reload" ) &&
+          isBoolean( url.reload ) &&
           url.reload
-        )
-      )
-    {
+        )) {
       onApplicationStart();
       application.ideal.reload = true;
     }
@@ -30,8 +22,7 @@ component
     request.ideal = application.ideal;
   }
 
-  public void function onError( error )
-  {
+  public void function onError( error ) {
     param error.message = "";
     param error.detail = "";
 
