@@ -3,24 +3,24 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
   property type="numeric" name="amount";
   property type="numeric" name="merchantID";
   property type="numeric" name="purchaseID"                                     hint="Order ID";
-  property type="numeric" name="subID" default=0;
-  property type="string"  name="cacheName" default="ideal-cache"                hint="ideal.cfc is cached per application";
-  property type="string"  name="currency" default="EUR";
-  property type="string"  name="debugEmail" default="administrator@your-website-here.nl" required=false;
-  property type="string"  name="debugIP" default="::1,fe80:0:0:0:0:0:0:1%1,127.0.0.1" required=false;
-  property type="string"  name="debugLog" default="ideal-cfc" required=false;
-  property type="string"  name="defaultCountry" default="Nederland"             hint="Optional, set to country of website";
+  property type="numeric" name="subID"              default=0;
+  property type="string"  name="cacheName"          default="ideal-cache"                hint="ideal.cfc is cached per application";
+  property type="string"  name="currency"           default="EUR";
+  property type="string"  name="debugEmail"         default="administrator@your-website-here.nl" required=false;
+  property type="string"  name="debugIP"            default="::1,fe80:0:0:0:0:0:0:1%1,127.0.0.1" required=false;
+  property type="string"  name="debugLog"           default="ideal-cfc" required=false;
+  property type="string"  name="defaultCountry"     default="Nederland"             hint="Optional, set to country of website";
   property type="string"  name="description"                                    hint="NO HTML ALLOWED!";
   property type="string"  name="entranceCode"                                   hint="Session ID";
   property type="string"  name="expirationPeriod"                               hint="Optional, date period format: PnYnMnDTnHnMnS";
-  property type="string"  name="idealURL" required=true;
+  property type="string"  name="idealURL"                               required=true;
   property type="string"  name="issuerID";
   property type="string"  name="ksAlias";
   property type="string"  name="ksFile";
   property type="string"  name="ksPassword";
-  property type="string"  name="language" default="nl";
+  property type="string"  name="language"           default="nl";
   property type="string"  name="merchantReturnURL";
-  property type="string"  name="transactionID" default="";
+  property type="string"  name="transactionID"      default="";
 
   /**
    * Constructor method
@@ -31,13 +31,13 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
   public ideal function init( string config="", struct initProperties={}) {
     try {
       lock name="lock_#application.applicationname#_init" timeout="5" type="exclusive" {
-        if( !structKeyExists( application, cacheName) || structKeyExists( url, "reload" )) {
-          application[cacheName]={};
+        if( !structKeyExists( application, getCacheName()) || structKeyExists( url, "reload" )) {
+          application[ getCacheName()]={};
         }
 
         /* Optionally read config from a file, otherwise, just instantiate the cfc with your options as arguments */
         if( len( trim( config )) && fileExists( config )) {
-          application[cacheName].properties={};
+          application[ getCacheName()].properties={};
 
           var configFile=fileRead( config, "utf-8" );
 
@@ -80,7 +80,7 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
       var result="";
 
       // Per ideal request, this is cached for the duration of the application's life.
-      if( !structKeyExists( application[cacheName], drCacheName )) {
+      if( !structKeyExists( application[ getCacheName()], drCacheName )) {
         var issuersXML=postRequest( "Directory" );
         var issuers={};
         var issuerLists=issuersXML.DirectoryRes.Directory;
@@ -108,10 +108,10 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
           });
         }
 
-        application[cacheName][drCacheName]=issuers;
+        application[ getCacheName()][drCacheName]=issuers;
       }
 
-      issuers=application[cacheName][drCacheName];
+      issuers=application[ getCacheName()][drCacheName];
       var issuerKeyList=listSort( structKeyList( issuers ), 'text' );
 
       if( len( getDefaultCountry())) {
@@ -192,16 +192,16 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
       var CanonicalizationMethod=createObject( "java", "javax.xml.crypto.dsig.CanonicalizationMethod" );
       var C14NMethodParameterSpec=createObject( "java", "javax.xml.crypto.dsig.spec.C14NMethodParameterSpec" );
       var InputSource=createObject( "java", "org.xml.sax.InputSource" );
-      var stringReader=createObject( "java", "java.io.stringReader" );
+      var stringReader=createObject( "java", "java.io.StringReader" );
       var PKCS8EncodedKeySpec=createObject( "java", "java.security.spec.PKCS8EncodedKeySpec" );
       var KeyFactory=createObject( "java", "java.security.KeyFactory" ).getInstance( "RSA" );
       var DOMSignContext=createObject( "java", "javax.xml.crypto.dsig.dom.DOMSignContext" );
       var DOMSource=createObject( "java", "javax.xml.transform.dom.DOMSource" );
       var TransformerFactory=createObject( "java", "javax.xml.transform.TransformerFactory" );
       var Transformer=createObject( "java", "javax.xml.transform.Transformer" );
-      var stringWriter=createObject( "java", "java.io.stringWriter" ).init();
+      var stringWriter=createObject( "java", "java.io.StringWriter" ).init();
       var StreamResult=createObject( "java", "javax.xml.transform.stream.StreamResult" );
-      var DOMstructure=createObject( "java", "javax.xml.crypto.dom.DOMstructure" );
+      var DOMstructure=createObject( "java", "javax.xml.crypto.dom.DOMStructure" );
       var KeyStore=createObject( "java", "java.security.KeyStore" );
       var PasswordProtection=createObject( "java", "java.security.KeyStore$PasswordProtection" ).init( getKSPassword().toCharArray());
       var FileInputStream=createObject( "java", "java.io.FileInputStream" );
