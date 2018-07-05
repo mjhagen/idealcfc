@@ -23,8 +23,8 @@ component {
   }
 
   public void function onError( error ) {
-    param error.message = "";
-    param error.detail = "";
+    param error.message="";
+    param error.detail="";
 
     writeOutput( '<h3>#error.message#</h3><h4>#error.detail#</h4>' );
     writeDump( error );

@@ -66,7 +66,7 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
 
       structAppend( variables, initProperties, true );
 
-      param variables.ksFile = "";
+      param variables.ksFile='';
 
       if ( left( variables.ksFile, 1 ) == '.' ) {
         variables.ksFile = expandPath( variables.ksFile );
