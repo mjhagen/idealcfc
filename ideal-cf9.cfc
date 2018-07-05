@@ -29,6 +29,17 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
   *                          init( initProperties={issuerID="12345"});
   */
   public component function init( string config = '', struct initProperties = {} ) {
+    // cf9 doesnt take defaults
+    param type="numeric" name="subID"              default=0;
+    param type="string"  name="cacheName"          default="ideal-cache";
+    param type="string"  name="currency"           default="EUR";
+    param type="string"  name="debugEmail"         default="administrator@your-website-here.nl";
+    param type="string"  name="debugIP"            default="::1,fe80:0:0:0:0:0:0:1%1,127.0.0.1";
+    param type="string"  name="debugLog"           default="ideal-cfc";
+    param type="string"  name="defaultCountry"     default="Nederland";
+    param type="string"  name="language"           default="nl";
+    param type="string"  name="transactionID"      default="";
+
     var pwd = getDirectoryFromPath( getCurrentTemplatePath() );
 
     if ( !structKeyExists( server, 'idealcrypto' ) || structKeyExists( url, 'idealreload' ) ) {
@@ -137,7 +148,8 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
       result &= '<select name="issuerID" id="issuerID" style="#css#" class="#class#">';
       result &= '<option value="">#firstOption#</option>';
 
-      for ( var key in issuerKeyList ) {
+      for ( var i = 0; i lte listLen( issuerKeyList ); i = i + 1 ) {
+        key = issuerKeyList;
         if ( !structKeyExists( issuers, key ) ) {
           continue;
         }
