@@ -1,26 +1,26 @@
 component accessors=true hint="See https://github.com/mjhagen/idealcfc for implementation help." {
   property type="date"    name="timestamp";
   property type="numeric" name="amount";
-  property type="numeric" name="merchantID";
-  property type="numeric" name="purchaseID" hint="Order ID";
-  property type="numeric" name="subID" default=0;
-  property type="string"  name="cacheName" default="ideal-cache" hint="ideal.cfc is cached per application";
-  property type="string"  name="currency" default="EUR";
-  property type="string"  name="debugEmail" default="administrator@your-website-here.nl" required=false;
-  property type="string"  name="debugIP" default="::1,fe80:0:0:0:0:0:0:1%1,127.0.0.1" required=false;
-  property type="string"  name="debugLog" default="ideal-cfc" required=false;
-  property type="string"  name="defaultCountry" default="Nederland" hint="Optional, set to country of website";
+  property type="numeric" name="merchantId";
+  property type="numeric" name="purchaseId" hint="Order ID";
+  property type="numeric" name="subId";
+  property type="string"  name="cacheName" hint="ideal.cfc is cached per application";
+  property type="string"  name="currency";
+  property type="string"  name="debugEmail";
+  property type="string"  name="debugIp";
+  property type="string"  name="debugLog";
+  property type="string"  name="defaultCountry" hint="Optional, set to country of website";
   property type="string"  name="description" hint="NO HTML ALLOWED!";
   property type="string"  name="entranceCode" hint="Session ID";
   property type="string"  name="expirationPeriod" hint="Optional, date period format: PnYnMnDTnHnMnS";
-  property type="string"  name="idealURL" required=true;
-  property type="string"  name="issuerID";
+  property type="string"  name="idealUrl" required=true;
+  property type="string"  name="issuerId";
   property type="string"  name="ksAlias";
   property type="string"  name="ksFile";
   property type="string"  name="ksPassword";
-  property type="string"  name="language" default="nl";
-  property type="string"  name="merchantReturnURL";
-  property type="string"  name="transactionID" default="";
+  property type="string"  name="language";
+  property type="string"  name="merchantReturnUrl";
+  property type="string"  name="transactionId";
 
   /**
   * Constructor method
@@ -29,6 +29,16 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
   *                          init( initProperties={issuerID="12345"});
   */
   public component function init( string config = '', struct initProperties = {} ) {
+    param type="numeric" name="subId"              default=0;
+    param type="string"  name="cacheName"          default="ideal-cache";
+    param type="string"  name="currency"           default="EUR";
+    param type="string"  name="debugEmail"         default="administrator@your-website-here.nl";
+    param type="string"  name="debugIp"            default="::1,fe80:0:0:0:0:0:0:1%1,127.0.0.1";
+    param type="string"  name="debugLog"           default="ideal-cfc";
+    param type="string"  name="defaultCountry"     default="Nederland";
+    param type="string"  name="language"           default="nl";
+    param type="string"  name="transactionId"      default="";
+
     var pwd = getDirectoryFromPath( getCurrentTemplatePath() );
 
     if ( !structKeyExists( server, 'idealcrypto' ) || structKeyExists( url, 'idealreload' ) ) {
@@ -41,13 +51,13 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
 
     try {
       lock name="lock_#application.applicationname#_init" timeout="5" type="exclusive" {
-        if ( !structKeyExists( application, getCacheName() ) || structKeyExists( url, 'reload' ) ) {
-          application[ getCacheName() ] = {};
+        if ( !structKeyExists( application, variables.cachename ) || structKeyExists( url, 'reload' ) ) {
+          application[ variables.cachename ] = {};
         }
 
         /* Optionally read config from a file, otherwise, just instantiate the cfc with your options as arguments */
         if ( len( trim( config ) ) && fileExists( config ) ) {
-          application[ getCacheName() ].properties = {};
+          application[ variables.cachename ].properties = {};
 
           var configFile = fileRead( config, 'utf-8' );
 
@@ -96,7 +106,7 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
       var result = '';
 
       // Per ideal request, this is cached for the duration of the application's life.
-      if ( !structKeyExists( application[ getCacheName() ], drCacheName ) ) {
+      if ( !structKeyExists( application[ variables.cachename ], drCacheName ) ) {
         var issuersXML = postRequest( 'Directory' );
         var issuers = {};
         var issuerLists = issuersXML.DirectoryRes.Directory;
@@ -121,23 +131,26 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
           arrayAppend( issuers[ issuerList ], { 'id' = issuerXML.xmlChildren[ 1 ].xmlText, 'name' = issuerXML.xmlChildren[ 2 ].xmlText } );
         }
 
-        application[ getCacheName() ][ drCacheName ] = issuers;
+        application[ variables.cacheName ][ drCacheName ] = issuers;
       }
 
-      issuers = application[ getCacheName() ][ drCacheName ];
+      issuers = application[ variables.cachename ][ drCacheName ];
       var issuerKeyList = listSort( structKeyList( issuers ), 'text' );
 
-      if ( len( getDefaultCountry() ) ) {
-        if ( listFindNoCase( issuerKeyList, getDefaultCountry() ) ) {
-          issuerKeyList = listDeleteAt( issuerKeyList, listFindNoCase( issuerKeyList, getDefaultCountry() ) );
+      if ( len( variables.defaultCountry ) ) {
+        if ( listFindNoCase( issuerKeyList, variables.defaultCountry ) ) {
+          issuerKeyList = listDeleteAt( issuerKeyList, listFindNoCase( issuerKeyList, variables.defaultCountry ) );
         }
-        issuerKeyList = listPrepend( issuerKeyList, getDefaultCountry() );
+        issuerKeyList = listPrepend( issuerKeyList, variables.defaultCountry );
       }
 
       result &= '<select name="issuerID" id="issuerID" style="#css#" class="#class#">';
       result &= '<option value="">#firstOption#</option>';
 
-      for ( var key in issuerKeyList ) {
+      var issuerKeyListLength = listLen( issuerKeyList );
+
+      for ( var i = 0; i <= issuerKeyListLength; i = i + 1 ) {
+        var key = issuerKeyList[ i ];
         if ( !structKeyExists( issuers, key ) ) {
           continue;
         }
@@ -171,7 +184,7 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
         location( url = transactionXML.AcquirerTrxRes.Issuer.issuerAuthenticationURL.xmlText, addToken = false );
       }
 
-      setTransactionID( transactionXML.AcquirerTrxRes.Transaction.transactionID.XmlText );
+      variables.transactionId = transactionXML.AcquirerTrxRes.Transaction.transactionID.XmlText;
 
       return transactionXML.AcquirerTrxRes.Issuer.issuerAuthenticationURL.xmlText;
     } catch ( any cfcatch ) {
@@ -196,32 +209,9 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
   */
   public string function signXML( required string strToSign ) {
     try {
-      var XMLSignatureFactory = createObject( 'java', 'javax.xml.crypto.dsig.XMLSignatureFactory' );
-      var DigestMethod = createObject( 'java', 'javax.xml.crypto.dsig.DigestMethod' );
-      var TransformService = createObject( 'java', 'javax.xml.crypto.dsig.TransformService' );
-      var DOMTransform = createObject( 'java', 'org.jcp.xml.dsig.internal.dom.DOMTransform' );
-      var DocumentBuilderFactory = createObject( 'java', 'javax.xml.parsers.DocumentBuilderFactory' );
-      var CanonicalizationMethod = createObject( 'java', 'javax.xml.crypto.dsig.CanonicalizationMethod' );
-      var C14NMethodParameterSpec = createObject( 'java', 'javax.xml.crypto.dsig.spec.C14NMethodParameterSpec' );
-      var InputSource = createObject( 'java', 'org.xml.sax.InputSource' );
-      var stringReader = createObject( 'java', 'java.io.StringReader' );
-      var PKCS8EncodedKeySpec = createObject( 'java', 'java.security.spec.PKCS8EncodedKeySpec' );
-      var KeyFactory = createObject( 'java', 'java.security.KeyFactory' ).getInstance( 'RSA' );
-      var DOMSignContext = createObject( 'java', 'javax.xml.crypto.dsig.dom.DOMSignContext' );
-      var DOMSource = createObject( 'java', 'javax.xml.transform.dom.DOMSource' );
-      var TransformerFactory = createObject( 'java', 'javax.xml.transform.TransformerFactory' );
-      var Transformer = createObject( 'java', 'javax.xml.transform.Transformer' );
-      var stringWriter = createObject( 'java', 'java.io.StringWriter' ).init();
-      var StreamResult = createObject( 'java', 'javax.xml.transform.stream.StreamResult' );
-      var DOMstructure = createObject( 'java', 'javax.xml.crypto.dom.DOMStructure' );
-      var KeyStore = createObject( 'java', 'java.security.KeyStore' );
-      var PasswordProtection = createObject( 'java', 'java.security.KeyStore$PasswordProtection' ).init( getKSPassword().toCharArray() );
-      var FileInputStream = createObject( 'java', 'java.io.FileInputStream' );
-      var Collections = createObject( 'java', 'java.util.Collections' );
-
       /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
       /* ~~ Signature creation: Step 1                                  ~~ */
-      /* ~~ Is now done in a java file compiled at runtime              ~~ */
+      /* ~~ Is now done in a java file                                  ~~ */
       /* ~~ idealcrypto.class                                           ~~ */
       /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
       var facObj = variables.idealcrypto.init();
@@ -233,10 +223,13 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
       /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
       /* Load the KeyStore and get the signing key and certificate. */
-      var ksfile = FileInputStream.init( getKSFile() );
-      var ks = KeyStore.getInstance( 'JKS' );
-      ks.load( ksfile, getKSPassword().toCharArray() );
-      var keyEntry = ks.getEntry( getKSAlias(), PasswordProtection );
+      var ksfile = createObject( 'java', 'java.io.FileInputStream' ).init( variables.ksFile );
+      var ks = createObject( 'java', 'java.security.KeyStore' ).getInstance( 'JKS' );
+      ks.load( ksfile, variables.ksPassword.toCharArray() );
+      var keyEntry = ks.getEntry(
+        variables.ksAlias,
+        createObject( 'java', 'java.security.KeyStore$PasswordProtection' ).init( variables.ksPassword.toCharArray() )
+      );
       var cert = keyEntry.getCertificate();
       ksfile.close();
 
@@ -249,13 +242,19 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
       /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
       /* Instantiate the document to be signed. */
-      var dbf_i = DocumentBuilderFactory.newInstance();
+      var dbf_i = createObject( 'java', 'javax.xml.parsers.DocumentBuilderFactory' ).newInstance();
       dbf_i.setNamespaceAware( true );
-      var doc = dbf_i.newDocumentBuilder().parse( InputSource.init( stringReader.init( strToSign ) ) );
+      var doc = dbf_i.newDocumentBuilder()
+        .parse(
+        createObject( 'java', 'org.xml.sax.InputSource' ).init( createObject( 'java', 'java.io.StringReader' ).init( strToSign ) )
+      );
 
       /* Create a DOMSignContext and specify the RSA PrivateKey and location of
             the resulting XMLSignature's parent element. */
-      var dsc = DOMSignContext.init( keyEntry.getPrivateKey(), doc.getDocumentElement() );
+      var dsc = createObject( 'java', 'javax.xml.crypto.dsig.dom.DOMSignContext' ).init(
+        keyEntry.getPrivateKey(),
+        doc.getDocumentElement()
+      );
 
       /* Create the XMLSignature, but don't sign it yet. */
       var signature = fac.newXMLSignature( signedInfo, keyInfo );
@@ -268,9 +267,10 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
       /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
       /* Output the resulting document. */
 
-      var xmlResult = StreamResult.init( stringWriter );
-      var ds = DOMSource.init( doc );
-      var tf = TransformerFactory.newInstance();
+      var stringWriter = createObject( 'java', 'java.io.StringWriter' ).init();
+      var xmlResult = createObject( 'java', 'javax.xml.transform.stream.StreamResult' ).init( stringWriter );
+      var ds = createObject( 'java', 'javax.xml.transform.dom.DOMSource' ).init( doc );
+      var tf = createObject( 'java', 'javax.xml.transform.TransformerFactory' ).newInstance();
       var trans = tf.newTransformer();
       trans.transform( ds, xmlResult );
 
@@ -290,18 +290,15 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
       var jPasswordProtection = createObject( 'java', 'java.security.KeyStore$PasswordProtection' );
 
       var ks = jKeyStore.getInstance( 'JKS' );
-      ks.load( jFileInputStream.init( getKSFile() ), getKSPassword().toCharArray() );
+      ks.load( jFileInputStream.init( variables.ksFile ), variables.ksPassword.toCharArray() );
 
-      var keyEntry = ks.getEntry( getKSAlias(), jPasswordProtection.init( getKSPassword().toCharArray() ) );
+      var keyEntry = ks.getEntry( variables.ksAlias, jPasswordProtection.init( variables.ksPassword.toCharArray() ) );
 
       return createSHA1Fingerprint( keyEntry.getCertificate() );
     } catch ( any cfcatch ) {
       return handleError( cfcatch );
     }
   }
-
-
-
 
   // PRAVIATE METHODS BELOW:
 
@@ -320,7 +317,7 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
     }
 
     /* Display the error if the client IP is on the debugger list */
-    if ( listFind( getDebugIP(), cgi.remote_addr ) ) {
+    if ( listFind( variables.debugIp, cgi.remote_addr ) ) {
       // getpagecontext().getcfoutput().clearall();
       if ( structKeyExists( error, 'extendedInfo' ) && len( trim( error.extendedInfo ) ) ) {
         writeOutput( error.extendedInfo );
@@ -330,9 +327,9 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
       abort;
     }
 
-    writeLog( text = '#error.message#, #error.detail#', type = 'Error', file = getDebugLog() );
+    writeLog( text = '#error.message#, #error.detail#', type = 'Error', file = variables.debugLog );
 
-    var debugemail = getDebugEmail();
+    var debugemail = variables.debugEmail;
     if ( isDefined( 'debugemail' ) ) {
       var mailService =new mail();
       mailService.setTo( debugemail );
@@ -358,46 +355,46 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
     try {
       var xmlstring = '<?xml version="1.0" encoding="UTF-8"?>';
 
-      setTimestamp( now() );
+      variables.timestamp = getFormattedTimestamp();
 
       switch ( requestType ) {
         case 'Directory':
           xmlstring &= '<DirectoryReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" xmlns:ns2="http://www.w3.org/2000/09/xmldsig##" version="3.3.1">'
-          & '<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>'
+          & '<createDateTimestamp>#variables.timestamp#</createDateTimestamp>'
           & '<Merchant>'
-          & '<merchantID>#getMerchantID()#</merchantID>'
-          & '<subID>#getSubID()#</subID>'
+          & '<merchantID>#variables.merchantId#</merchantID>'
+          & '<subID>#variables.subId#</subID>'
           & '</Merchant>'
           & '</DirectoryReq>';
           break;
         case 'Transaction':
-          setEntranceCode( getPurchaseID() );
-          setDescription( right( getDescription(), 32 ) );
+          variables.entranceCode = variables.purchaseId;
+          variables.description = right( variables.description, 32 );
 
           xmlstring &= '<AcquirerTrxReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">'
-          & '<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>'
+          & '<createDateTimestamp>#variables.timestamp#</createDateTimestamp>'
           & '<Issuer>'
-          & '<issuerID>#getIssuerID()#</issuerID>'
+          & '<issuerID>#variables.issuerId#</issuerID>'
           & '</Issuer>'
           & '<Merchant>'
-          & '<merchantID>#getMerchantID()#</merchantID>'
-          & '<subID>#getSubID()#</subID>'
-          & '<merchantReturnURL>#xmlFormat( getMerchantReturnURL() )#</merchantReturnURL>'
+          & '<merchantID>#variables.merchantId#</merchantID>'
+          & '<subID>#variables.subId#</subID>'
+          & '<merchantReturnURL>#xmlFormat( variables.merchantReturnUrl )#</merchantReturnURL>'
           & '</Merchant>'
           & '<Transaction>'
-          & '<purchaseID>#getPurchaseID()#</purchaseID>'
-          & '<amount>#getAmount()#</amount>'
-          & '<currency>#getCurrency()#</currency>';
+          & '<purchaseID>#variables.purchaseId#</purchaseID>'
+          & '<amount>#variables.amount#</amount>'
+          & '<currency>#variables.currency#</currency>';
 
-          if ( len( getExpirationPeriod() ) ) {
-            xmlstring &= '<expirationPeriod>#getExpirationPeriod()#</expirationPeriod>';
+          if ( len( variables.expirationPeriod ) ) {
+            xmlstring &= '<expirationPeriod>#variables.expirationPeriod#</expirationPeriod>';
           }
 
-          xmlstring &= '<language>#getLanguage()#</language>'
-          & '<description>#xmlFormat( getDescription() )#</description>';
+          xmlstring &= '<language>#variables.language#</language>'
+          & '<description>#xmlFormat( variables.description )#</description>';
 
-          if ( len( getEntranceCode() ) ) {
-            xmlstring &= '<entranceCode>#xmlFormat( getEntranceCode() )#</entranceCode>';
+          if ( len( variables.entranceCode ) ) {
+            xmlstring &= '<entranceCode>#xmlFormat( variables.entranceCode )#</entranceCode>';
           }
 
           xmlstring &= '</Transaction>'
@@ -405,13 +402,13 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
           break;
         case 'Status':
           xmlstring &= '<AcquirerStatusReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">'
-          & '<createDateTimestamp>#getFormattedTimestamp()#</createDateTimestamp>'
+          & '<createDateTimestamp>#variables.timestamp#</createDateTimestamp>'
           & '<Merchant>'
-          & '<merchantID>#getMerchantID()#</merchantID>'
-          & '<subID>#getSubID()#</subID>'
+          & '<merchantID>#variables.merchantId#</merchantID>'
+          & '<subID>#variables.subId#</subID>'
           & '</Merchant>'
           & '<Transaction>'
-          & '<transactionID>#getTransactionID()#</transactionID>'
+          & '<transactionID>#variables.transactionId#</transactionID>'
           & '</Transaction>'
           & '</AcquirerStatusReq>';
           break;
@@ -421,7 +418,7 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
       var xmlRequest = xmlParse( singedXML );
       var httpService =new http();
 
-      httpService.setURL( getIdealURL() );
+      httpService.setURL( variables.idealUrl );
       httpService.setMethod( 'post' );
       httpService.setCharset( 'utf-8' );
       httpService.addParam( type = 'header', name = 'content-type', value = 'text/xml; charset="utf-8"' );
@@ -450,14 +447,13 @@ component accessors=true hint="See https://github.com/mjhagen/idealcfc for imple
 
       /* Error logging */
       if ( structKeyExists( result, 'AcquirerErrorRes' ) ) {
+        var errorFileContent = htmlEditFormat( indentXml( httpRequest.fileContent ) );
         throw(
           type = 'nl.mingo.ideal.postRequest',
           message = '#result.AcquirerErrorRes.Error.errorMessage.xmlText#',
           detail = '#result.AcquirerErrorRes.Error.errorDetail.xmlText#',
           errorCode = '#result.AcquirerErrorRes.Error.errorCode.xmlText#',
-          extendedInfo = '<table><tr><td valign="top"><pre>#htmlEditFormat( indentXml( singedXML ) )#</pre></td><td valign="top"><pre>#htmlEditFormat(
-indentXml( httpRequest.fileContent )
-)#</pre></td></tr></table>'
+          extendedInfo = '<table><tr><td valign="top"><pre>#htmlEditFormat( indentXml( singedXML ) )#</pre></td><td valign="top"><pre>#errorFileContent#</pre></td></tr></table>'
         );
       }
 
@@ -472,8 +468,8 @@ indentXml( httpRequest.fileContent )
   */
   private string function getFormattedTimestamp() {
     try {
-      var timestamp = dateConvert( 'local2utc', getTimestamp() );
-      return dateFormat( timestamp, 'yyyy-mm-dd' ) & 'T' & timeFormat( timestamp, 'HH:mm:ss.l' ) & 'Z';
+      var ts = dateConvert( 'local2utc', now() );
+      return dateFormat( ts, 'yyyy-mm-dd' ) & 'T' & timeFormat( ts, 'HH:mm:ss.l' ) & 'Z';
     } catch ( any cfcatch ) {
       return handleError( cfcatch );
     }
